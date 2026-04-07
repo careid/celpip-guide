@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
@@ -12,11 +13,13 @@ import {
   Plane,
   Home,
   ChevronDown,
+  Dumbbell,
 } from "lucide-react";
 import { useState } from "react";
 
-const navItems = [
+const navItems: { href: string; label: string; icon: React.ElementType; highlight?: boolean }[] = [
   { href: "/", label: "Home", icon: Home },
+  { href: "/practice/writing", label: "Practice", icon: Dumbbell, highlight: true },
   { href: "/listening", label: "Listening", icon: Headphones },
   { href: "/reading", label: "Reading", icon: BookOpen },
   { href: "/writing", label: "Writing", icon: PenLine },
@@ -43,14 +46,16 @@ export function Navigation() {
 
           {/* Desktop nav */}
           <div className="hidden md:flex items-center gap-1">
-            {navItems.map(({ href, label, icon: Icon }) => (
+            {navItems.map(({ href, label, icon: Icon, highlight }) => (
               <Link
                 key={href}
                 href={href}
                 className={clsx(
                   "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
-                  pathname === href
-                    ? "bg-brand-50 text-brand-700"
+                  pathname === href || pathname.startsWith(href === "/practice/writing" ? "/practice" : href + "/")
+                    ? highlight ? "bg-brand-600 text-white" : "bg-brand-50 text-brand-700"
+                    : highlight
+                    ? "bg-brand-50 text-brand-700 hover:bg-brand-100"
                     : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
                 )}
               >
@@ -73,15 +78,17 @@ export function Navigation() {
       {/* Mobile dropdown */}
       {mobileOpen && (
         <div className="md:hidden border-t border-gray-100 bg-white px-4 pb-3">
-          {navItems.map(({ href, label, icon: Icon }) => (
+          {navItems.map(({ href, label, icon: Icon, highlight }) => (
             <Link
               key={href}
               href={href}
               onClick={() => setMobileOpen(false)}
               className={clsx(
                 "flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium mt-1 transition-colors",
-                pathname === href
-                  ? "bg-brand-50 text-brand-700"
+                pathname === href || pathname.startsWith(href === "/practice/writing" ? "/practice" : href + "/")
+                  ? highlight ? "bg-brand-600 text-white" : "bg-brand-50 text-brand-700"
+                  : highlight
+                  ? "bg-brand-50 text-brand-700 hover:bg-brand-100"
                   : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
               )}
             >

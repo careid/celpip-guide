@@ -1,6 +1,23 @@
+"use client";
+
 import Link from "next/link";
-import { Headphones, BookOpen, PenLine, Mic, BarChart3, Plane, Clock, Target, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import {
+  Headphones,
+  BookOpen,
+  PenLine,
+  Mic,
+  BarChart3,
+  Plane,
+  Clock,
+  Target,
+  AlertTriangle,
+  CheckCircle2,
+  ChevronRight,
+  TrendingUp,
+} from "lucide-react";
 import { Card, CardGrid } from "@/components/Card";
+import { getPracticeStats, formatCriterionName, formatRelativeTime, type PracticeStats } from "@/lib/session-store";
 
 const sections = [
   {
@@ -64,22 +81,113 @@ const clbScores = [
   { score: "4", clb: "CLB 4", level: "Basic", use: "Min for Citizenship (L+S only)" },
 ];
 
+function PracticeDashboard({ stats }: { stats: PracticeStats }) {
+  return (
+    <div className="bg-white rounded-xl border border-brand-200 shadow-sm p-5 mb-8">
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <TrendingUp className="w-4 h-4 text-brand-600" />
+            <span className="text-sm font-semibold text-gray-900">Your Practice</span>
+          </div>
+          <div className="flex items-center gap-4 text-sm text-gray-600 flex-wrap">
+            <span>
+              <span className="font-bold text-gray-900">{stats.totalSessions}</span> session{stats.totalSessions !== 1 ? "s" : ""}
+            </span>
+            {stats.lastPracticed && (
+              <span>Last practice: <span className="font-medium text-gray-800">{formatRelativeTime(stats.lastPracticed)}</span></span>
+            )}
+            {stats.writingSessionCount > 0 && (
+              <span>{stats.writingSessionCount} writing</span>
+            )}
+            {stats.speakingSessionCount > 0 && (
+              <span>{stats.speakingSessionCount} speaking</span>
+            )}
+          </div>
+          {stats.weakestCriterion && (
+            <div className="mt-2 inline-flex items-center gap-1.5 text-xs bg-amber-50 border border-amber-200 text-amber-800 rounded-full px-3 py-1">
+              <AlertTriangle className="w-3 h-3" />
+              Biggest gap: <span className="font-semibold">{formatCriterionName(stats.weakestCriterion)}</span>
+            </div>
+          )}
+        </div>
+        <Link
+          href={stats.weakestCriterion?.includes("coher") || stats.weakestCriterion?.includes("vocab") || stats.weakestCriterion?.includes("task_f") || stats.weakestCriterion?.includes("read") ? "/practice/writing" : "/practice/writing"}
+          className="flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold px-4 py-2.5 rounded-lg transition-colors shrink-0"
+        >
+          Continue Practicing <ChevronRight className="w-4 h-4" />
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function PracticeCallout() {
+  return (
+    <div className="bg-gradient-to-r from-brand-600 to-purple-600 rounded-xl p-6 mb-8 text-white shadow-md">
+      <h2 className="text-xl font-bold mb-1">Practice the test, not the theory</h2>
+      <p className="text-white/80 text-sm mb-4 max-w-xl">
+        You already speak English fluently. What moves your score is timed practice with rubric-specific feedback.
+        No account required.
+      </p>
+      <div className="flex gap-3 flex-wrap">
+        <Link
+          href="/practice/writing"
+          className="flex items-center gap-2 bg-white text-brand-700 font-semibold text-sm px-4 py-2.5 rounded-lg hover:bg-white/90 transition-colors"
+        >
+          <PenLine className="w-4 h-4" />
+          Writing Practice
+        </Link>
+        <Link
+          href="/practice/speaking"
+          className="flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white font-semibold text-sm px-4 py-2.5 rounded-lg transition-colors border border-white/30"
+        >
+          <Mic className="w-4 h-4" />
+          Speaking Practice
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 export default function Home() {
+  const [stats, setStats] = useState<PracticeStats | null>(null);
+
+  useEffect(() => {
+    setStats(getPracticeStats());
+  }, []);
+
+  const hasPracticeHistory = stats !== null && stats.totalSessions > 0;
+
   return (
     <div>
-      {/* Hero */}
-      <div className="text-center mb-10">
-        <div className="inline-flex items-center gap-2 bg-brand-600 text-white rounded-full px-4 py-1.5 text-sm font-medium mb-4">
-          <Target className="w-4 h-4" />
-          Personal Study Guide
+      {/* Practice section — dashboard if returning, callout if new */}
+      {stats !== null && (
+        hasPracticeHistory ? <PracticeDashboard stats={stats} /> : <PracticeCallout />
+      )}
+
+      {/* Hero — condensed when practice history exists */}
+      {!hasPracticeHistory && (
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center gap-2 bg-brand-600 text-white rounded-full px-4 py-1.5 text-sm font-medium mb-4">
+            <Target className="w-4 h-4" />
+            Personal Study Guide
+          </div>
+          <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-3">
+            CELPIP Exam Guide
+          </h1>
+          <p className="text-xl text-gray-500 max-w-2xl mx-auto">
+            Canadian English Language Proficiency Index Program — complete preparation for all four skills.
+          </p>
         </div>
-        <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-3">
-          CELPIP Exam Guide
-        </h1>
-        <p className="text-xl text-gray-500 max-w-2xl mx-auto">
-          Canadian English Language Proficiency Index Program — complete preparation for all four skills.
-        </p>
-      </div>
+      )}
+
+      {hasPracticeHistory && (
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-gray-900">CELPIP Guide</h1>
+          <p className="text-gray-500 text-sm">Reference material — strategy guides, rubrics, and scoring.</p>
+        </div>
+      )}
 
       {/* Quick stats bar */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-10">
@@ -96,26 +204,6 @@ export default function Home() {
           </div>
         ))}
       </div>
-
-      {/* About CELPIP */}
-      <Card className="mb-8">
-        <h2 className="text-xl font-bold text-gray-900 mb-3">What is CELPIP?</h2>
-        <p className="text-gray-700 mb-3 leading-relaxed">
-          CELPIP (Canadian English Language Proficiency Index Program) is a fully computer-delivered English
-          proficiency test designed for Canadian immigration and citizenship. Administered by Paragon Testing
-          Enterprises, it is accepted by IRCC for Express Entry, permanent residency, and Canadian citizenship.
-        </p>
-        <div className="grid sm:grid-cols-2 gap-4 mt-4">
-          <div className="bg-gray-50 rounded-lg p-4">
-            <h4 className="font-semibold text-gray-800 mb-2">CELPIP-General</h4>
-            <p className="text-sm text-gray-600">All 4 skills (Listening, Reading, Writing, Speaking). ~3 hours. Used for Express Entry and permanent residency.</p>
-          </div>
-          <div className="bg-gray-50 rounded-lg p-4">
-            <h4 className="font-semibold text-gray-800 mb-2">CELPIP-General-LS</h4>
-            <p className="text-sm text-gray-600">Listening and Speaking only. ~70 minutes. Specifically for Canadian citizenship applications (ages 18–54).</p>
-          </div>
-        </div>
-      </Card>
 
       {/* Test Sections */}
       <h2 className="text-2xl font-bold text-gray-900 mb-4">Test Sections</h2>
